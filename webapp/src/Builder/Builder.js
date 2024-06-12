@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import firebase from 'firebase';
 import arrayMove from 'array-move';
 import fetch from 'fetch-retry';
 import { toast } from 'react-toastify';
@@ -13,6 +12,7 @@ import Dropzone from 'react-dropzone';
 import BugReporter from 'BugReporter';
 import { translate, getActiveLocale } from 'i18n/locale';
 import capitalize from 'utils/capitalize';
+import gravitaesql from 'utils/gravitaesql';
 import { getApiHostname, getStorageHostname } from 'utils/getHostname';
 import hashCv from 'utils/hashCv';
 import logger from 'utils/logger';
@@ -105,7 +105,9 @@ class Builder extends Component {
     };
     requestCv.path = hashCv(requestCv);
 
-    logger(requestCv, 'FRONT_REQUEST', JSON.stringify(requestCv));
+    const email = requestCv.curriculum_vitae.header.email;
+    const path = requestCv.path;
+    logger(email, path, 'FRONT_REQUEST', JSON.stringify(requestCv));
     this.setState({ downloading: true });
 
     const startTime = window.performance.now();
@@ -139,11 +141,11 @@ class Builder extends Component {
                 element.click();
               });
               const serveTime = window.performance.now();
-              logger(requestCv, 'SERVED_FOR_DOWNLOAD', serveTime - startTime);
+              logger(email, path, 'SERVED_FOR_DOWNLOAD', serveTime - startTime);
               toast.update('downloading', { render: `${translate('ready')}!`, autoClose: 5000, type: toast.TYPE.INFO });
               this.setState({ downloading: false });
             } else {
-              logger(requestCv, 'FAILURE_NOTIFIED');
+              logger(email, path, 'FAILURE_NOTIFIED');
               toast.update('downloading', { render: translate('error_processing_file'), autoClose: 5000, type: toast.TYPE.ERROR });
               this.setState({ showBugUi: true, downloading: false });
             }
@@ -159,14 +161,17 @@ class Builder extends Component {
   saveOnAccount() {
     const { user } = this.props;
     if (user !== null) {
-      const db = firebase
-        .database()
-        .ref('users')
-        .child(user.uid);
-      db.set(this.props.userData);
-      this.setState({ lastSaved: JSON.stringify(this.props.userData) });
-      toast.success(translate('saved'), {
-        toastId: 'autosv',
+      gravitaesql(this.props.userData.cv.header.email, `
+        mutation UpdateUser($legacyJson: String!) {
+          updateUser(legacyJson: $legacyJson)
+        }
+      `, {
+        legacyJson: JSON.stringify(this.props.userData)
+      }).then(_ => {
+        this.setState({ lastSaved: JSON.stringify(this.props.userData) });
+        toast.success(translate('saved'), {
+          toastId: 'autosv',
+        });
       });
     }
   }

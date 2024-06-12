@@ -18,6 +18,12 @@ spec:
       - backend:
           serviceName: api
           servicePort: 6000
+  - host: gravitaesql.vitaes.io
+    http:
+      paths:
+      - backend:
+          serviceName: gravitaesql
+          servicePort: 6007
   - host: storage.vitaes.io
     http:
       paths:

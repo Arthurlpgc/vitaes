@@ -1,0 +1,7 @@
+.dockerignore
+.DS_Store
+Dockerfile*
+node_modules/
+dist/
+src/generated/
+service-account-file.json

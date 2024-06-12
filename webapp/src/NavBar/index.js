@@ -3,6 +3,7 @@ import { Navbar, Nav, NavDropdown } from 'react-bootstrap';
 import firebase from 'firebase';
 
 import { translate } from 'i18n/locale';
+import gravitaesql from 'utils/gravitaesql'
 
 import Login from 'Login';
 
@@ -12,7 +13,7 @@ class NavBar extends React.Component {
 
     this.state = {
       user: null,
-      permissions: null,
+      isAdmin: false,
       showLogin: false,
     };
 
@@ -23,18 +24,18 @@ class NavBar extends React.Component {
 
   componentDidMount() {
     firebase
-      .database()
-      .ref('permissions')
-      .on('value', (snapshot) => {
-        this.setState({ permissions: snapshot.val() });
-      });
-
-    firebase
       .auth()
       .getRedirectResult()
       .then(() => {
         const user = firebase.auth().currentUser;
         this.setState({ user });
+        gravitaesql(user?.email, `
+          query IsAdmin {
+            isAdmin
+          }
+        `).then(
+          data => this.setState({ isAdmin: data.isAdmin })
+        );
       });
   }
 
@@ -53,7 +54,7 @@ class NavBar extends React.Component {
 
   render() {
     const { onChangeLanguage } = this.props;
-    const { user, permissions, showLogin } = this.state;
+    const { user, isAdmin, showLogin } = this.state;
 
     return (
       <React.Fragment>
@@ -84,7 +85,7 @@ class NavBar extends React.Component {
                 <NavDropdown.Item onClick={() => onChangeLanguage('en_US')}>English</NavDropdown.Item>
                 <NavDropdown.Item onClick={() => onChangeLanguage('pt_BR')}>Português</NavDropdown.Item>
               </NavDropdown>
-              {user !== null && permissions !== null && permissions[user.uid]
+              {user !== null && isAdmin
                 ? (
                   <NavDropdown title={translate('dev_options')} id="basic-nav-dropdown">
                     <NavDropdown.Item

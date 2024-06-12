@@ -14,6 +14,21 @@ services:
     - logger
     networks:
     - net
+  gravitaesql:
+    container_name: gravitaesql
+    build:
+      context: gravitaesql/.
+      dockerfile: Dockerfile.dev
+    image: dev-gravitaesql
+    ports:
+    - 6007:6007
+    volumes:
+    - ./gravitaesql/src:/vitaes/src
+    - ./gravitaesql/service-account-file.json:/vitaes/service-account-file.json
+    depends_on:
+    - mysql
+    networks:
+    - net
   logger:
     container_name: logger
     build:
@@ -76,11 +91,13 @@ services:
   mysql:
     container_name: mysql
     image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
     ports:
     - 3306:3306
     restart: always
     environment:
     - MYSQL_ROOT_PASSWORD=vitaes
+    - MYSQL_DATABASE=vitaes
     volumes:
     - mysql-volume:/var/lib/mysql
     networks:

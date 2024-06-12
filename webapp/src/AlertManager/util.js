@@ -1,40 +1,31 @@
 import { toast } from 'react-toastify';
-import firebase from 'firebase';
 
-import { getActiveLanguage } from 'i18n/locale';
+import gravitaesql from 'utils/gravitaesql';
 
 let messages = [];
 let messageCallback = () => { };
 
 export function setAlertCallback(callback) {
   messageCallback = callback;
-  setTimeout(() => callback(messages), 200);
+  callback(messages);
 }
 
 export function setupAlerts() {
-  const dbErrors = firebase.database().ref('messages');
-  dbErrors.on('value', (snapshot) => {
-    if (snapshot.val() !== null) {
-      messages = snapshot.val();
-      messageCallback(messages);
-      for (const msgKey in snapshot.val()) {
-        const msg = snapshot.val()[msgKey];
-        if (msg !== undefined) {
-          const language = getActiveLanguage();
-          let msgStr = '';
-          if (msg[language]) {
-            msgStr = msg[language];
-          } else {
-            msgStr = msg.en;
-          }
-          let msgType = 'warning';
-          if (msg.type) {
-            msgType = msg.type;
-          }
-          toast(msgStr, { type: msgType });
-        }
+  gravitaesql(null, `
+    query AlertList {
+      alertList {
+        message
+        type
       }
     }
+  `).then(data => {
+    messages = [];
+    for (const i in data.alertList) {
+      const alert = data.alertList[i];
+      messages.push(alert.message);
+      toast(alert.message, { type: alert.type.toLowerCase() });
+    }
+    messageCallback(messages);
   });
 }
 

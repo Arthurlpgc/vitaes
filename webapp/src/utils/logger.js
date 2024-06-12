@@ -2,10 +2,12 @@ import fetch from 'fetch-retry';
 
 import { getLoggerHostname } from 'utils/getHostname';
 
-export default function logger(req, step, data, stacktrace) {
+export default function logger(email, path, step, data, stacktrace) {
   const formData = new URLSearchParams();
-  formData.append('email', req.curriculum_vitae.header.email);
-  formData.append('cv_hash', req.path);
+  formData.append('email', email);
+  if (path) {
+    formData.append('cv_hash', path);
+  }
   formData.append('origin', 'WEBAPP');
   formData.append('step', step);
   if (data) {

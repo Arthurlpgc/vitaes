@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import firebase from 'firebase';
 import _ from 'lodash';
 import {
   Form, InputGroup,
@@ -8,6 +7,7 @@ import { toast } from 'react-toastify';
 import { Button, Segment } from 'semantic-ui-react';
 
 import { translate } from 'i18n/locale';
+import gravitaesql from 'utils/gravitaesql';
 
 import defaultAlert from './default';
 
@@ -19,14 +19,22 @@ export class AlertCreationForm extends Component {
   }
 
   addAlert() {
-    const errorRef = firebase.database().ref('messages').push();
     const message = _.cloneDeep(this.state.message);
     if (!message.en) {
       toast.error(translate('no_en_message_error'));
       return;
     }
-    errorRef.set(message);
-    this.setState({ message: defaultAlert() });
+    gravitaesql(null, `
+      mutation Createlert($message: String!, $type: AlertType!) {
+        createAlert(message: $message, type: $type)
+      }
+    `, {
+      message: message.en,
+      type: message.type.toUpperCase(),
+    }).then(_ => {
+      this.setState({ message: defaultAlert() });
+      this.props.onSave();
+    });
   }
 
   render() {

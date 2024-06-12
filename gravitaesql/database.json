@@ -1,0 +1,11 @@
+{
+  "dev": {
+    "driver": "mysql",
+    "host": { "ENV": "MYSQL_HOST" },
+    "user": "root",
+    "password": "vitaes",
+    "database": "vitaes",
+    "multipleStatements": true
+  },
+  "sql-file" : true
+}

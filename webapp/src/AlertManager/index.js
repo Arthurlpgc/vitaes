@@ -7,7 +7,7 @@ import { translate } from 'i18n/locale';
 
 import { AlertList } from './AlertList';
 import { AlertCreationForm } from './AlertCreationForm';
-import { setAlertCallback } from './util';
+import { setAlertCallback, setupAlerts } from './util';
 import ReactPixel from 'react-facebook-pixel';
 
 export class AlertManager extends Component {
@@ -25,11 +25,18 @@ export class AlertManager extends Component {
   render() {
     return (
       [
-        <AlertCreationForm />,
+        <AlertCreationForm onSave={ setupAlerts } />,
         <Card>
           <Card.Header>{translate('alerts')}</Card.Header>
           <ListGroup variant="flush">
-            <AlertList alerts={this.state.alerts} />
+            <AlertList
+              alerts={this.state.alerts}
+              setAlerts={deleted => {
+                this.setState({
+                  alerts: Array.from(this.state.alerts).filter(alert => alert !== deleted)
+                });
+              }}
+            />
           </ListGroup>
         </Card>,
       ]

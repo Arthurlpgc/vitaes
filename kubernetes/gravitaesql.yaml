@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gravitaesql
+spec:
+  selector:
+    matchLabels:
+      app: gravitaesql
+  template:
+    metadata:
+      labels:
+        app: gravitaesql
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: gravitaesql
+        image: vitaes/gravitaesql
+        imagePullPolicy: Always
+        volumeMounts:
+          - name: firebase-service-account
+            mountPath: /vitaes
+            readOnly: true
+      volumes:
+        - name: firebase-service-account
+          secret:
+            secretName: firebase-service-account
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: gravitaesql
+spec:
+  type: NodePort
+  ports:
+  - port: 6007
+  selector:
+    app: gravitaesql

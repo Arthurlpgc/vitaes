@@ -10,6 +10,7 @@ if env == 'production' or env == 'staging':
     os.system('linkerd inject kubernetes/mysql.yaml | kubectl apply -f -')
     os.system('linkerd inject kubernetes/grafana.yaml | kubectl apply -f -')
     os.system('linkerd inject kubernetes/logger.yaml | kubectl apply -f -')
+    os.system('linkerd inject kubernetes/gravitaesql.yaml | kubectl apply -f -')
     os.system('linkerd inject kubernetes/webapp.yaml | kubectl apply -f -')
     os.system('sleep 10')
     os.system('linkerd inject kubernetes/renderer.yaml | kubectl apply -f -')

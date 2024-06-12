@@ -1,6 +1,7 @@
 # Vitaes
 
 ![api](https://github.com/NeverDefineUs/vitaes/workflows/api/badge.svg)
+![gravitaesql](https://github.com/NeverDefineUs/vitaes/workflows/gravitaesql/badge.svg)
 ![logger](https://github.com/NeverDefineUs/vitaes/workflows/logger/badge.svg)
 ![renderer](https://github.com/NeverDefineUs/vitaes/workflows/renderer/badge.svg)
 ![storage](https://github.com/NeverDefineUs/vitaes/workflows/storage/badge.svg)

@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import {
   Button, Form, Modal, OverlayTrigger, Row, Tooltip,
 } from 'react-bootstrap';
-import firebase from 'firebase';
 import { toast } from 'react-toastify';
 
+import gravitaesql from 'utils/gravitaesql';
 import { translate } from 'i18n/locale';
 import { BugReporterField } from './BugReporterField';
 import { BugReporterCheckbox } from './BugReporterCheckbox';
@@ -16,7 +16,7 @@ const styles = {
 
 export const BugReporter = (props) => {
   const [title, setTitle] = useState('');
-  const [desc, setDesc] = useState('');
+  const [description, setDescription] = useState('');
   const [email, setEmail] = useState('');
   const [sendState, setSendState] = useState(true);
 
@@ -43,9 +43,9 @@ export const BugReporter = (props) => {
           >
             <BugReporterField
               label={translate('description')}
-              value={desc}
+              value={description}
               long
-              setter={setDesc}
+              setter={setDescription}
             />
           </OverlayTrigger>
           <OverlayTrigger overlay={
@@ -70,20 +70,18 @@ export const BugReporter = (props) => {
                 toast.error(translate('missing_title'));
                 return;
               }
-              const bug = {};
-              bug.title = title;
-              bug.desc = desc;
-              bug.email = email;
-              if (sendState) {
-                bug.data = props.data;
-              }
-              const bugRef = firebase
-                .database()
-                .ref('bug')
-                .push();
-              bugRef.set(bug);
+              gravitaesql(email, `
+                mutation CreateBugReport($title: String!, $email: String, $description: String, $data: String) {
+                  createBugReport(title: $title, email: $email, description: $description, data: $data)
+                }
+              `, {
+                title,
+                email,
+                description,
+                data: sendState ? JSON.stringify(props.data) : null,
+              });
               setTitle('');
-              setDesc('');
+              setDescription('');
               setEmail('');
               props.onHide();
             }}

@@ -1,0 +1,75 @@
+name: gravitaesql
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+    - 'gravitaesql/**'
+  pull_request:
+    paths:
+    - 'gravitaesql/**'
+  release:
+    types: [ published ]
+
+env:
+  IMAGE_NAME: gravitaesql
+
+defaults:
+  run:
+    working-directory: ./gravitaesql
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Use Node.js 11.14
+      uses: actions/setup-node@v1
+      with:
+        node-version: 11.14
+    - uses: actions/checkout@v2
+    - run: yarn install --frozen-lockfile
+    - run: yarn build
+    - run: yarn test
+  push:
+    needs: build
+    if: contains(github.ref, 'tags')
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.build_step.outputs.version }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build image
+      id: build_step
+      run: |
+        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+        docker build -t vitaes/$IMAGE_NAME:latest .
+        docker tag vitaes/$IMAGE_NAME:latest vitaes/$IMAGE_NAME:$VERSION
+    - name: Login to Docker hub
+      run: |
+        echo ${{ secrets.DOCKER_HUB_PASSWORD }} | \
+        docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
+    - name: Push image
+      run: |
+        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+        docker push vitaes/$IMAGE_NAME:latest
+        docker push vitaes/$IMAGE_NAME:$VERSION
+    - name: Logout from Docker hub
+      run: docker logout
+  deploy:
+    needs: push
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+    - name: Install doctl
+      uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+    - name: Setup kubeconfig
+      run: doctl kubernetes cluster kubeconfig save vitaes
+    - name: Rollout new container
+      run: |
+        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+        kubectl set image deployment/$IMAGE_NAME \
+          $IMAGE_NAME=vitaes/$IMAGE_NAME:$VERSION
